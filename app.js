@@ -22,8 +22,8 @@ const { loadData, runnerFactory } = require('./zutils');
 const cmd = false;
 const inputs = [];
 
-// Example story: http://ifdb.tads.org/viewgame?id=mohwfk47yjzii14w
-const story = 'http://mirror.ifarchive.org/if-archive/games/zcode/LostPig.z8';
+// Example story: http://ifdb.tads.org/viewgame?id=dxrh8psuetm5wrqs
+const story = 'https://www.ifarchive.org/if-archive/games/zcode/german/abent.z5';
 
 // [START YourAction]
 // Preload the story data before first action request
@@ -44,6 +44,7 @@ expressApp.post('/', (request, response) => {
   const DIRECTION_INTENT = 'input.directions';
   const DIRECTION_ARGUMENT = 'Directions';
   const LOOK_INTENT = 'input.look';
+  const SEARCH_INTENT = 'input.searchGame';
 
   const runner = runnerFactory(story, app);
   if (runner === null) {
@@ -54,13 +55,14 @@ expressApp.post('/', (request, response) => {
     console.log('welcomeIntent');
     runner.started = app.data.hasOwnProperty('restore');
     runner.start();
+    app.tell('Spiel gestartet.')
   };
 
   const unknownIntent = (app) => {
     console.log('unknownIntent: ' + app.getRawInput());
     if (app.getRawInput() === 'quit') {
       app.data.restore = null;
-      app.tell('Goodbye!');
+      app.tell('Tschüss!');
     } else {
       app.mappedInput = app.getRawInput();
       runner.start();
