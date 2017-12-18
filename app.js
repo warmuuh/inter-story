@@ -24,6 +24,7 @@ const inputs = [];
 
 // Example story: http://ifdb.tads.org/viewgame?id=dxrh8psuetm5wrqs
 // const story = 'https://www.ifarchive.org/if-archive/games/zcode/german/abent.z5';
+// https://developers.google.com/actions/reference/nodejs/DialogflowApp
 
 const story = 'http://www.textfire.de/comp/mamph_pamph.z5';
 
@@ -44,6 +45,7 @@ expressApp.post('/', (request, response) => {
   const START_GAME_INTENT = 'input.startGame';
   const OVERVIEW_INTENT = 'input.overview';
   const UNKNOWN_INTENT = 'input.unknown';
+  const OPTION_INTENT = 'option.select';
  
   const GAME_ARGUMENT = 'game';
 
@@ -52,15 +54,32 @@ expressApp.post('/', (request, response) => {
     throw new Error('Runner not found!');
   }
 
+  
   const startGame = (app) => {
     const game = app.getArgument(GAME_ARGUMENT);
     console.log('game argument: ' + game)
     runner.started = app.data.hasOwnProperty('restore');
     runner.start();
   };
+  function optionIntent (app) {
+    if (app.getSelectedOption() === "mamph_pamph") {
+      startGame(app);
+    } else {
+      app.tell('Leider ist mommentan nur Mamph Pamph verfügbar.');
+    }
+  }
 
  const overview = (app) => {
-    app.ask("Es gibt folgende Spiele: Mamph Pamph von C Plus Plus oder Schießbefehl von Marius Müller.")
+    app.askWithCarousel("Es gibt folgende Spiele",
+       app.buildCarousel()
+         .addItems([
+           app.buildOptionItem("mamph_pamph",
+             ['Mamph Pamph von C++'])
+             .setTitle('Mamph Pamph'),
+           app.buildOptionItem("schiessbefehl",
+             ['Schießbefehl von Marius Müller'])
+             .setTitle('Schießbefehl'),
+         ]));
   };
 
   const unknownIntent = (app) => {

@@ -241,17 +241,17 @@ class ZvmRunner {
           console.log('description: ' + this.description);
           if (!cmd) {
             let response = '';
-            if (this.description) {
-              response = this.description;
-            }
-            if (!this.started) {
-              if (this.subtitle) {
-                response = this.subtitle + '. ' + response;
-              }
-              if (this.title) {
-                response = 'Welcome to your voice adventure called ' + this.title + '. ' + response + ' ' + HELP;
-              }
-            }
+            // if (this.description) {
+            //   response = this.description;
+            // }
+            // if (!this.started) {
+            //   if (this.subtitle) {
+            //     response = this.subtitle + '. ' + response;
+            //   }
+            //   if (this.title) {
+            //     response = 'Welcome to your voice adventure called ' + this.title + '. ' + response + ' ' + HELP;
+            //   }
+            // }
             if (this.restarting) {
               this.restarting = false;
               this.started = false;
