@@ -41,23 +41,26 @@ expressApp.post('/', (request, response) => {
   const app = new DialogflowApp({request: request, response: response});
   console.log('Request headers: ' + JSON.stringify(request.headers));
   console.log('Request body: ' + JSON.stringify(request.body));
-  const WELCOME_INTENT = 'input.welcome';
+  const START_GAME_INTENT = 'input.startGame';
+  const OVERVIEW_INTENT = 'input.overview';
   const UNKNOWN_INTENT = 'input.unknown';
-  const DIRECTION_INTENT = 'input.directions';
-  const DIRECTION_ARGUMENT = 'Directions';
-  const LOOK_INTENT = 'input.look';
-  const SEARCH_INTENT = 'input.searchGame';
+ 
+  const GAME_ARGUMENT = 'game';
 
   const runner = runnerFactory(story, app);
   if (runner === null) {
     throw new Error('Runner not found!');
   }
 
-  const welcomeIntent = (app) => {
-    console.log('welcomeIntent');
+  const startGame = (app) => {
+    const game = app.getArgument(GAME_ARGUMENT);
+    console.log('game argument: ' + game)
     runner.started = app.data.hasOwnProperty('restore');
     runner.start();
-    app.tell('Spiel gestartet.')
+  };
+
+ const overview = (app) => {
+    app.ask("Es gibt folgende Spiele: Mamph Pamph von C Plus Plus oder Schießbefehl von Marius Müller.")
   };
 
   const unknownIntent = (app) => {
@@ -71,24 +74,11 @@ expressApp.post('/', (request, response) => {
     }
   };
 
-  const directionsIntent = (app) => {
-    const direction = app.getArgument(DIRECTION_ARGUMENT);
-    console.log('directionsIntent: ' + direction);
-    app.mappedInput = 'go ' + direction;
-    runner.start();
-  };
-
-  const lookIntent = (app) => {
-    console.log('lookIntent');
-    app.mappedInput = 'look';
-    runner.start();
-  };
 
   const actionMap = new Map();
-  actionMap.set(WELCOME_INTENT, welcomeIntent);
+  actionMap.set(START_GAME_INTENT, startGame);
+  actionMap.set(OVERVIEW_INTENT, overview);
   actionMap.set(UNKNOWN_INTENT, unknownIntent);
-  actionMap.set(DIRECTION_INTENT, directionsIntent);
-  actionMap.set(LOOK_INTENT, lookIntent);
 
   const url = request.query.url;
   if (url) {
