@@ -42,7 +42,7 @@ expressApp.post('/', (request, response) => {
   const app = new DialogflowApp({request: request, response: response});
   console.log('Request headers: ' + JSON.stringify(request.headers));
   console.log('Request body: ' + JSON.stringify(request.body));
-  console.log('App Object', JSON.stringify(app))
+  console.log('App Data Object', JSON.stringify(app.data))
 
   const runner = runnerFactory(story, app);
   if (runner === null) {
