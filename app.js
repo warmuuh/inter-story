@@ -18,7 +18,7 @@ const { DialogflowApp } = require('actions-on-google');
 const express = require('express');
 const bodyParser = require('body-parser');
 const { loadData, runnerFactory } = require('./zutils');
-const { getActionMap } = require('/intentHandlers')
+const { getActionMap } = require('./intentHandlers')
 const cmd = false;
 const inputs = [];
 
@@ -43,7 +43,7 @@ expressApp.post('/', (request, response) => {
   console.log('Request headers: ' + JSON.stringify(request.headers));
   console.log('Request body: ' + JSON.stringify(request.body));
   console.log('App Object', JSON.stringify(app))
-  
+
   const runner = runnerFactory(story, app);
   if (runner === null) {
     throw new Error('Runner not found!');
