@@ -4,7 +4,7 @@ const UNKNOWN_INTENT = 'input.unknown';
 const GAME_ARGUMENT = 'game';
 
 module.exports = {
-  getActionMap = (runner) => {
+  getActionMap: function(runner) {
 
     const startGame = (app) => {
       const game = app.getArgument(GAME_ARGUMENT);
