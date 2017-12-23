@@ -2,8 +2,8 @@ const FileLoader = require("./FileLoader");
 
 const ZVM = require('./zvm.js');
 
-//const story = 'http://www.textfire.de/comp/mamph_pamph.z5';
-const story = 'http://mirror.ifarchive.org/if-archive/games/zcode/LostPig.z8';
+const story = 'http://www.textfire.de/comp/mamph_pamph.z5';
+//const story = 'http://mirror.ifarchive.org/if-archive/games/zcode/LostPig.z8';
 
 
 //api: https://github.com/jedi4ever/ifplayer.js/blob/master/lib/ifplayer.js
@@ -15,20 +15,34 @@ process.on('unhandledRejection', error => {
   console.error('unhandledRejection', error);
 });
 
+var storedData;
+
+
 loader.loadData(story)
-.then(data => ZvmRunner.load(data, new ConsoleInterfaceHandler()))
+.then(data => {
+  storedData = JSON.parse(JSON.stringify(data));
+  return ZvmRunner.load(data, new ConsoleInterfaceHandler())
+})
 .then(runner => {
     console.log("runner initialized")
     runner.run();
     return runner;
 })
 .then(runner => {
-  runner.input("go north");
+   runner.saveGame();
+})
+.then(runner => {
+  runner.input("nimm küchenmesser");
   return runner;
 })
-//.then(runner => {
-//   runner.input("nimm holzbrett");
-// });
+.then(runner => {
+  runner.restoreGame(storedData)
+  return runner;
+})
+.then(runner => {
+  runner.input("nimm küchenmesser");
+  return runner;
+})
 
 
 class TextEntry {
@@ -54,6 +68,11 @@ class ConsoleInterfaceHandler implements UserInterfaceHandler {
 
 class OrderFactory {
 
+
+  constructor(private lastReadRetriever: ()=>any){
+
+  }
+
   loadStory(data){
     return {
       code: 'load',
@@ -62,17 +81,19 @@ class OrderFactory {
   }
 
   respondWith(answer){
-    return {
-      code: 'read',
-      response: answer,
-      storer: 255,
-      time: 0,
-      routine: 0,
-      initiallen: 0,
-      buffer: 41054,
-      parse: 41177,
-      len: 120
-    }
+    var lastRead = this.lastReadRetriever();
+    lastRead.response = answer;
+    return lastRead;
+  }
+
+  saveGame(){
+    var lastRead = this.lastReadRetriever();
+    lastRead.code = 'save';
+    return lastRead;
+  }
+
+  restoreGame(status){
+    return {'storer': 255, 'code': 'restore', 'data': status}
   }
 }
 
@@ -80,8 +101,16 @@ class CommandInterpreter {
 
   buffer: TextEntry[] = []
   lastAnswer: String
+  lastReadOrder: any;
+
   constructor(private engine, public handler: UserInterfaceHandler){
 
+  }
+
+
+  getOrderFactory(): OrderFactory {
+    var self = this;
+    return new OrderFactory(() => JSON.parse(JSON.stringify(self.lastReadOrder)))
   }
 
   processAllOrders(){
@@ -110,6 +139,10 @@ class CommandInterpreter {
       return;
     }
 
+    // if (order.to == 'status' && order.data){
+    //     storedData = order.data;
+    // }
+
     //skip no-text orders
     if (!order.text){
       return;
@@ -130,11 +163,12 @@ class CommandInterpreter {
 
 
   find(order){
-    //console.log(order)
+    console.log(order)
   }
 
   read(order){
     console.log(order)
+    this.lastReadOrder = order;
     this.handler.tell(this.buffer);
     this.buffer = []
   }
@@ -167,8 +201,8 @@ class ZvmRunner {
 
   constructor(handler: UserInterfaceHandler){
     this.engine = new ZVM()
-    this.orders = new OrderFactory()
     this.interpreter = new CommandInterpreter(this.engine, handler);
+    this.orders = this.interpreter.getOrderFactory()
   }
 
   static load(data, handler){
@@ -204,6 +238,16 @@ class ZvmRunner {
     this.sendInput(this.orders.respondWith(answer));
     this.run()
     this.interpreter.clearLastAnswer();
+  }
+
+  saveGame(){
+    this.sendInput(this.orders.saveGame());
+    this.run();
+  }
+
+  restoreGame(status){
+    this.sendInput(this.orders.restoreGame(status));
+    this.run();
   }
 
 }

@@ -1,27 +1,39 @@
 var FileLoader = require("./FileLoader");
 var ZVM = require('./zvm.js');
-//const story = 'http://www.textfire.de/comp/mamph_pamph.z5';
-var story = 'http://mirror.ifarchive.org/if-archive/games/zcode/LostPig.z8';
+var story = 'http://www.textfire.de/comp/mamph_pamph.z5';
+//const story = 'http://mirror.ifarchive.org/if-archive/games/zcode/LostPig.z8';
 //api: https://github.com/jedi4ever/ifplayer.js/blob/master/lib/ifplayer.js
 var loader = new FileLoader();
 process.on('unhandledRejection', function (error) {
     // Will print "unhandledRejection err is not defined"
     console.error('unhandledRejection', error);
 });
+var storedData;
 loader.loadData(story)
-    .then(function (data) { return ZvmRunner.load(data, new ConsoleInterfaceHandler()); })
+    .then(function (data) {
+    storedData = JSON.parse(JSON.stringify(data));
+    return ZvmRunner.load(data, new ConsoleInterfaceHandler());
+})
     .then(function (runner) {
     console.log("runner initialized");
     runner.run();
     return runner;
 })
     .then(function (runner) {
-    runner.input("go north");
+    runner.saveGame();
+})
+    .then(function (runner) {
+    runner.input("nimm küchenmesser");
+    return runner;
+})
+    .then(function (runner) {
+    runner.restoreGame(storedData);
+    return runner;
+})
+    .then(function (runner) {
+    runner.input("nimm küchenmesser");
     return runner;
 });
-//.then(runner => {
-//   runner.input("nimm holzbrett");
-// });
 var TextEntry = (function () {
     function TextEntry(text, style) {
         this.text = text;
@@ -40,7 +52,8 @@ var ConsoleInterfaceHandler = (function () {
     return ConsoleInterfaceHandler;
 })();
 var OrderFactory = (function () {
-    function OrderFactory() {
+    function OrderFactory(lastReadRetriever) {
+        this.lastReadRetriever = lastReadRetriever;
     }
     OrderFactory.prototype.loadStory = function (data) {
         return {
@@ -49,17 +62,17 @@ var OrderFactory = (function () {
         };
     };
     OrderFactory.prototype.respondWith = function (answer) {
-        return {
-            code: 'read',
-            response: answer,
-            storer: 255,
-            time: 0,
-            routine: 0,
-            initiallen: 0,
-            buffer: 41054,
-            parse: 41177,
-            len: 120
-        };
+        var lastRead = this.lastReadRetriever();
+        lastRead.response = answer;
+        return lastRead;
+    };
+    OrderFactory.prototype.saveGame = function () {
+        var lastRead = this.lastReadRetriever();
+        lastRead.code = 'save';
+        return lastRead;
+    };
+    OrderFactory.prototype.restoreGame = function (status) {
+        return { 'storer': 255, 'code': 'restore', 'data': status };
     };
     return OrderFactory;
 })();
@@ -69,6 +82,10 @@ var CommandInterpreter = (function () {
         this.handler = handler;
         this.buffer = [];
     }
+    CommandInterpreter.prototype.getOrderFactory = function () {
+        var self = this;
+        return new OrderFactory(function () { return JSON.parse(JSON.stringify(self.lastReadOrder)); });
+    };
     CommandInterpreter.prototype.processAllOrders = function () {
         var self = this;
         var orders = this.engine.orders;
@@ -89,6 +106,9 @@ var CommandInterpreter = (function () {
         if (order.name === 'status') {
             return;
         }
+        // if (order.to == 'status' && order.data){
+        //     storedData = order.data;
+        // }
         //skip no-text orders
         if (!order.text) {
             return;
@@ -103,10 +123,11 @@ var CommandInterpreter = (function () {
         this.buffer.push(new TextEntry(text, style));
     };
     CommandInterpreter.prototype.find = function (order) {
-        //console.log(order)
+        console.log(order);
     };
     CommandInterpreter.prototype.read = function (order) {
         console.log(order);
+        this.lastReadOrder = order;
         this.handler.tell(this.buffer);
         this.buffer = [];
     };
@@ -127,8 +148,8 @@ var CommandInterpreter = (function () {
 var ZvmRunner = (function () {
     function ZvmRunner(handler) {
         this.engine = new ZVM();
-        this.orders = new OrderFactory();
         this.interpreter = new CommandInterpreter(this.engine, handler);
+        this.orders = this.interpreter.getOrderFactory();
     }
     ZvmRunner.load = function (data, handler) {
         var self = this;
@@ -158,5 +179,14 @@ var ZvmRunner = (function () {
         this.run();
         this.interpreter.clearLastAnswer();
     };
+    ZvmRunner.prototype.saveGame = function () {
+        this.sendInput(this.orders.saveGame());
+        this.run();
+    };
+    ZvmRunner.prototype.restoreGame = function (status) {
+        this.sendInput(this.orders.restoreGame(status));
+        this.run();
+    };
     return ZvmRunner;
 })();
+//# sourceMappingURL=test.js.map
