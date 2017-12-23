@@ -1,45 +1,23 @@
 var FileLoader = require("./FileLoader");
 var ZVM = require('./zvm.js');
-var story = 'http://www.textfire.de/comp/mamph_pamph.z5';
-//const story = 'http://mirror.ifarchive.org/if-archive/games/zcode/LostPig.z8';
-//api: https://github.com/jedi4ever/ifplayer.js/blob/master/lib/ifplayer.js
-var loader = new FileLoader();
-process.on('unhandledRejection', function (error) {
-    // Will print "unhandledRejection err is not defined"
-    console.error('unhandledRejection', error);
-});
-var storedData;
-loader.loadData(story)
-    .then(function (data) {
-    storedData = JSON.parse(JSON.stringify(data));
-    return ZvmRunner.load(data, new ConsoleInterfaceHandler());
-})
-    .then(function (runner) {
-    console.log("runner initialized");
-    runner.run();
-    return runner;
-})
-    .then(function (runner) {
-    runner.saveGame();
-})
-    .then(function (runner) {
-    runner.input("nimm küchenmesser");
-    return runner;
-})
-    .then(function (runner) {
-    runner.restoreGame(storedData);
-    return runner;
-})
-    .then(function (runner) {
-    runner.input("nimm küchenmesser");
-    return runner;
-});
+var fs = require("fs");
 var TextEntry = (function () {
     function TextEntry(text, style) {
         this.text = text;
         this.style = style;
     }
     return TextEntry;
+})();
+var InMemoryStorageHandler = (function () {
+    function InMemoryStorageHandler() {
+    }
+    InMemoryStorageHandler.prototype.store = function (gameState) {
+        this.storedData = gameState;
+    };
+    InMemoryStorageHandler.prototype.getStoredData = function () {
+        return this.storedData;
+    };
+    return InMemoryStorageHandler;
 })();
 var ConsoleInterfaceHandler = (function () {
     function ConsoleInterfaceHandler() {
@@ -52,8 +30,9 @@ var ConsoleInterfaceHandler = (function () {
     return ConsoleInterfaceHandler;
 })();
 var OrderFactory = (function () {
-    function OrderFactory(lastReadRetriever) {
+    function OrderFactory(lastReadRetriever, lastSaveRetriever) {
         this.lastReadRetriever = lastReadRetriever;
+        this.lastSaveRetriever = lastSaveRetriever;
     }
     OrderFactory.prototype.loadStory = function (data) {
         return {
@@ -68,23 +47,29 @@ var OrderFactory = (function () {
     };
     OrderFactory.prototype.saveGame = function () {
         var lastRead = this.lastReadRetriever();
-        lastRead.code = 'save';
+        lastRead.response = 'save';
         return lastRead;
     };
-    OrderFactory.prototype.restoreGame = function (status) {
-        return { 'storer': 255, 'code': 'restore', 'data': status };
+    OrderFactory.prototype.confirmGameSaved = function (wasSuccess) {
+        var lastSave = this.lastSaveRetriever();
+        lastSave.result = wasSuccess ? 1 : 0;
+        return lastSave;
+    };
+    OrderFactory.prototype.restoreGame = function (data) {
+        return { 'storer': 255, 'code': 'restore', 'data': data };
     };
     return OrderFactory;
 })();
 var CommandInterpreter = (function () {
-    function CommandInterpreter(engine, handler) {
+    function CommandInterpreter(engine, handler, storage) {
         this.engine = engine;
         this.handler = handler;
+        this.storage = storage;
         this.buffer = [];
     }
     CommandInterpreter.prototype.getOrderFactory = function () {
         var self = this;
-        return new OrderFactory(function () { return JSON.parse(JSON.stringify(self.lastReadOrder)); });
+        return new OrderFactory(function () { return JSON.parse(JSON.stringify(self.lastReadOrder)); }, function () { return JSON.parse(JSON.stringify(self.lastSaveOrder)); });
     };
     CommandInterpreter.prototype.processAllOrders = function () {
         var self = this;
@@ -98,10 +83,13 @@ var CommandInterpreter = (function () {
         if (!this[order.code]) {
             throw "Missing handler method for vm-code " + order.code;
         }
-        this[order.code](order);
+        var newOrder = this[order.code](order);
+        if (newOrder) {
+            this.engine.inputEvent(newOrder);
+        }
     };
     CommandInterpreter.prototype.stream = function (order) {
-        console.log(order);
+        //console.log(order)
         // Skip status line updates
         if (order.name === 'status') {
             return;
@@ -123,10 +111,10 @@ var CommandInterpreter = (function () {
         this.buffer.push(new TextEntry(text, style));
     };
     CommandInterpreter.prototype.find = function (order) {
-        console.log(order);
+        //console.log(order)
     };
     CommandInterpreter.prototype.read = function (order) {
-        console.log(order);
+        //console.log(order)
         this.lastReadOrder = order;
         this.handler.tell(this.buffer);
         this.buffer = [];
@@ -143,17 +131,23 @@ var CommandInterpreter = (function () {
     CommandInterpreter.prototype.clearLastAnswer = function () {
         this.lastAnswer = null;
     };
+    CommandInterpreter.prototype.save = function (order) {
+        //console.log(order)
+        storage.store(order.data);
+        order.result = 1;
+        return order;
+    };
     return CommandInterpreter;
 })();
 var ZvmRunner = (function () {
-    function ZvmRunner(handler) {
+    function ZvmRunner(handler, storage) {
         this.engine = new ZVM();
-        this.interpreter = new CommandInterpreter(this.engine, handler);
+        this.interpreter = new CommandInterpreter(this.engine, handler, storage);
         this.orders = this.interpreter.getOrderFactory();
     }
-    ZvmRunner.load = function (data, handler) {
+    ZvmRunner.load = function (data, handler, storage) {
         var self = this;
-        var runner = new ZvmRunner(handler);
+        var runner = new ZvmRunner(handler, storage);
         runner.sendInput(runner.orders.loadStory(data));
         return new Promise(function (resolve, reject) {
             try {
@@ -189,4 +183,42 @@ var ZvmRunner = (function () {
     };
     return ZvmRunner;
 })();
+var story = 'http://www.textfire.de/comp/mamph_pamph.z5';
+//const story = 'http://mirror.ifarchive.org/if-archive/games/zcode/LostPig.z8';
+//api: https://github.com/jedi4ever/ifplayer.js/blob/master/lib/ifplayer.js
+var loader = new FileLoader();
+var storage = new InMemoryStorageHandler();
+process.on('unhandledRejection', function (error) {
+    // Will print "unhandledRejection err is not defined"
+    console.error('unhandledRejection', error);
+});
+loader.loadData(story)
+    .then(function (data) {
+    return ZvmRunner.load(data, new ConsoleInterfaceHandler(), storage);
+})
+    .then(function (runner) {
+    console.log("runner initialized");
+    runner.run();
+    return runner;
+})
+    .then(function (runner) {
+    runner.saveGame();
+    return runner;
+})
+    .then(function (runner) {
+    runner.input("nimm küchenmesser");
+    return runner;
+})
+    .then(function (runner) {
+    runner.input("nimm küchenmesser");
+    return runner;
+})
+    .then(function (runner) {
+    runner.restoreGame(storage.getStoredData());
+    return runner;
+})
+    .then(function (runner) {
+    runner.input("nimm küchenmesser");
+    return runner;
+});
 //# sourceMappingURL=test.js.map

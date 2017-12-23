@@ -1,48 +1,7 @@
 const FileLoader = require("./FileLoader");
 
 const ZVM = require('./zvm.js');
-
-const story = 'http://www.textfire.de/comp/mamph_pamph.z5';
-//const story = 'http://mirror.ifarchive.org/if-archive/games/zcode/LostPig.z8';
-
-
-//api: https://github.com/jedi4ever/ifplayer.js/blob/master/lib/ifplayer.js
-
-const loader = new FileLoader()
-
-process.on('unhandledRejection', error => {
-  // Will print "unhandledRejection err is not defined"
-  console.error('unhandledRejection', error);
-});
-
-var storedData;
-
-
-loader.loadData(story)
-.then(data => {
-  storedData = JSON.parse(JSON.stringify(data));
-  return ZvmRunner.load(data, new ConsoleInterfaceHandler())
-})
-.then(runner => {
-    console.log("runner initialized")
-    runner.run();
-    return runner;
-})
-.then(runner => {
-   runner.saveGame();
-})
-.then(runner => {
-  runner.input("nimm küchenmesser");
-  return runner;
-})
-.then(runner => {
-  runner.restoreGame(storedData)
-  return runner;
-})
-.then(runner => {
-  runner.input("nimm küchenmesser");
-  return runner;
-})
+const fs = require("fs")
 
 
 class TextEntry {
@@ -50,11 +9,24 @@ class TextEntry {
 }
 
 interface UserInterfaceHandler {
-
   tell(texts: TextEntry[])
-
 }
 
+interface StorageHandler {
+  store(gameState)
+}
+
+class InMemoryStorageHandler {
+  
+  storedData: any;
+  store(gameState){
+    this.storedData = gameState
+  }
+
+  getStoredData(){
+    return this.storedData;
+  }
+}
 
 class ConsoleInterfaceHandler implements UserInterfaceHandler {
   tell(texts: TextEntry[]){
@@ -69,7 +41,7 @@ class ConsoleInterfaceHandler implements UserInterfaceHandler {
 class OrderFactory {
 
 
-  constructor(private lastReadRetriever: ()=>any){
+  constructor(private lastReadRetriever: ()=>any, private lastSaveRetriever: ()=>any){
 
   }
 
@@ -88,12 +60,18 @@ class OrderFactory {
 
   saveGame(){
     var lastRead = this.lastReadRetriever();
-    lastRead.code = 'save';
+    lastRead.response = 'save';
     return lastRead;
   }
 
-  restoreGame(status){
-    return {'storer': 255, 'code': 'restore', 'data': status}
+  confirmGameSaved(wasSuccess: boolean){
+    var lastSave = this.lastSaveRetriever();
+    lastSave.result = wasSuccess ? 1 : 0;
+    return lastSave;
+  }
+
+  restoreGame(data){
+    return {'storer': 255, 'code': 'restore', 'data': data}
   }
 }
 
@@ -102,15 +80,19 @@ class CommandInterpreter {
   buffer: TextEntry[] = []
   lastAnswer: String
   lastReadOrder: any;
+  lastSaveOrder: any;
 
-  constructor(private engine, public handler: UserInterfaceHandler){
+  constructor(private engine, public handler: UserInterfaceHandler, public storage: StorageHandler){
 
   }
 
 
   getOrderFactory(): OrderFactory {
     var self = this;
-    return new OrderFactory(() => JSON.parse(JSON.stringify(self.lastReadOrder)))
+    return new OrderFactory(
+        () => JSON.parse(JSON.stringify(self.lastReadOrder)),
+        () => JSON.parse(JSON.stringify(self.lastSaveOrder))
+    )
   }
 
   processAllOrders(){
@@ -128,12 +110,15 @@ class CommandInterpreter {
     if (!this[order.code]){
       throw "Missing handler method for vm-code " + order.code;
     }
-    this[order.code](order);
+    var newOrder = this[order.code](order);
+    if (newOrder){
+      this.engine.inputEvent(newOrder);
+    }
   }
 
 
   stream(order){
-    console.log(order)
+    //console.log(order)
     // Skip status line updates
     if (order.name === 'status') {
       return;
@@ -163,11 +148,11 @@ class CommandInterpreter {
 
 
   find(order){
-    console.log(order)
+    //console.log(order)
   }
 
   read(order){
-    console.log(order)
+    //console.log(order)
     this.lastReadOrder = order;
     this.handler.tell(this.buffer);
     this.buffer = []
@@ -189,6 +174,13 @@ class CommandInterpreter {
   clearLastAnswer(){
     this.lastAnswer = null;
   }
+
+  save(order){
+    //console.log(order)
+    storage.store(order.data)
+    order.result = 1;
+    return order;
+  }
 }
 
 
@@ -199,15 +191,15 @@ class ZvmRunner {
   orders: OrderFactory;
   interpreter: CommandInterpreter;
 
-  constructor(handler: UserInterfaceHandler){
+  constructor(handler: UserInterfaceHandler, storage: StorageHandler){
     this.engine = new ZVM()
-    this.interpreter = new CommandInterpreter(this.engine, handler);
+    this.interpreter = new CommandInterpreter(this.engine, handler, storage);
     this.orders = this.interpreter.getOrderFactory()
   }
 
-  static load(data, handler){
+  static load(data, handler: UserInterfaceHandler, storage: StorageHandler){
       const self = this;
-      const runner = new ZvmRunner(handler)
+      const runner = new ZvmRunner(handler, storage)
       runner.sendInput(runner.orders.loadStory(data))
 
       return new Promise((resolve, reject) => {
@@ -232,7 +224,6 @@ class ZvmRunner {
     this.interpreter.processAllOrders();
   }
 
-
   input(answer: String){
     this.interpreter.setLastAnswer(answer);
     this.sendInput(this.orders.respondWith(answer));
@@ -251,3 +242,50 @@ class ZvmRunner {
   }
 
 }
+
+const story = 'http://www.textfire.de/comp/mamph_pamph.z5';
+//const story = 'http://mirror.ifarchive.org/if-archive/games/zcode/LostPig.z8';
+
+
+//api: https://github.com/jedi4ever/ifplayer.js/blob/master/lib/ifplayer.js
+
+const loader = new FileLoader()
+const storage = new InMemoryStorageHandler();
+
+process.on('unhandledRejection', error => {
+  // Will print "unhandledRejection err is not defined"
+  console.error('unhandledRejection', error);
+});
+
+
+
+loader.loadData(story)
+.then(data => {
+  return ZvmRunner.load(data, new ConsoleInterfaceHandler(), storage)
+})
+.then(runner => {
+    console.log("runner initialized")
+    runner.run();
+    return runner;
+})
+.then(runner => {
+   runner.saveGame();
+   return runner;
+})
+.then(runner => {
+  runner.input("nimm küchenmesser");
+  return runner;
+})
+.then(runner => {
+  runner.input("nimm küchenmesser");
+  return runner;
+})
+.then(runner => {
+  runner.restoreGame(storage.getStoredData())
+  return runner;
+})
+.then(runner => {
+  runner.input("nimm küchenmesser");
+  return runner;
+})
+
