@@ -59,6 +59,7 @@ var CommandInterpreter = /** @class */ (function () {
     };
     CommandInterpreter.prototype.read = function (order) {
         //console.log(order)
+        console.log("set lastReadOrder: " + JSON.stringify(order));
         this.lastReadOrder = order;
         this.handler.tell(this.buffer);
         this.buffer = [];

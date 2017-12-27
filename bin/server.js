@@ -72,7 +72,7 @@ function handlePost(request, response) {
     })
         .then(function (runner) {
         var actionMap = getActionMap(runner);
-        dfApp.handleRequest(actionMap)
+        dfApp.handleRequestAsync(actionMap)
             .then(function () {
             runner.saveGame();
         });
