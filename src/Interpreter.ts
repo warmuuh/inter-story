@@ -82,6 +82,7 @@ export class CommandInterpreter {
   
     read(order){
       //console.log(order)
+      console.log("set lastReadOrder: " + JSON.stringify(order))
       this.lastReadOrder = order;
       this.handler.tell(this.buffer);
       this.buffer = []
