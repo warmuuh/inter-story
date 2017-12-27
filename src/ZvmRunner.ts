@@ -17,12 +17,12 @@ export default class ZvmRunner {
       this.orders = this.interpreter.getOrderFactory()
     }
   
-    static load(data, handler: UserInterfaceHandler, storage: StorageHandler){
+    static load(data, handler: UserInterfaceHandler, storage: StorageHandler): Promise<ZvmRunner> {
         const self = this;
         const runner = new ZvmRunner(handler, storage)
         runner.sendInput(runner.orders.loadStory(data))
   
-        return new Promise((resolve, reject) => {
+        return new Promise<ZvmRunner>((resolve, reject) => {
           try {
             runner.engine.restart();
           } catch (e) {
