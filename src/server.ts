@@ -89,7 +89,7 @@ function handlePost(request: express.Request, response: express.Response){
   })
   .then((runner: ZvmRunner) => {
     const actionMap = getActionMap(runner)
-    dfApp.handleRequest(actionMap)
+    dfApp.handleRequestAsync(actionMap)
     .then(() => {
       runner.saveGame();
     });
