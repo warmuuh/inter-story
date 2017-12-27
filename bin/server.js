@@ -62,6 +62,7 @@ function handlePost(request, response) {
         .then(function (runner) {
         console.log("runner initialized");
         if (storage.hasStoredData()) {
+            console.log("loading saved data");
             handler.mute(true);
             runner.run();
             runner.restoreGame(storage.getStoredData());
@@ -71,11 +72,10 @@ function handlePost(request, response) {
     })
         .then(function (runner) {
         var actionMap = getActionMap(runner);
-        dfApp.handleRequest(actionMap);
-        return runner;
-    })
-        .then(function (runner) {
-        runner.saveGame();
+        dfApp.handleRequest(actionMap)
+            .then(function () {
+            runner.saveGame();
+        });
         return runner;
     });
 }
