@@ -1,6 +1,6 @@
 CREATE SCHEMA interstory;
 
-CREATE TABLE intstory.savegames (
+CREATE TABLE interstory.savegames (
    ID   INT              NOT NULL,
    USERID VARCHAR (255)     NOT NULL,
    GAMEID VARCHAR (20)      NOT NULL,
