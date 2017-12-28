@@ -5,6 +5,7 @@ var bodyParser = require("body-parser");
 var FileLoader = require("./FileLoader");
 var ZvmRunner_1 = require("./ZvmRunner");
 var getActionMap = require('./intentHandlers').getActionMap;
+var PostgresStorage_1 = require("./PostgresStorage");
 process.env.DEBUG = 'actions-on-google:*';
 var DialogflowApp = require('actions-on-google').DialogflowApp;
 var app = express();
@@ -51,23 +52,26 @@ var GoogleActionsInterfaceHandler = /** @class */ (function () {
 }());
 var storyUrl = 'http://www.textfire.de/comp/mamph_pamph.z5';
 var storyData = new FileLoader().loadData(storyUrl);
-var storage = new InMemoryStorageHandler();
 function handlePost(request, response) {
     var dfApp = new DialogflowApp({ request: request, response: response });
     var handler = new GoogleActionsInterfaceHandler(dfApp);
+    //TODO: pool psql connection
+    var storage = new PostgresStorage_1["default"](dfApp.getUser().userId, 'mamphpamph', process.env.DATABASE_URL);
     storyData
         .then(function (data) {
         return ZvmRunner_1["default"].load(data, handler, storage);
     })
         .then(function (runner) {
         console.log("runner initialized");
-        if (storage.hasStoredData()) {
+        storage.getStoredData().then(function (savegame) {
             console.log("loading saved data");
             handler.mute(true);
             runner.run();
-            runner.restoreGame(storage.getStoredData());
+            runner.restoreGame(savegame);
             handler.mute(false);
-        }
+        }, function (err) {
+            console.log("not loading savegame: " + err);
+        });
         return runner;
     })
         .then(function (runner) {

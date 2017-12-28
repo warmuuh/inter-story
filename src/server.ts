@@ -4,7 +4,7 @@ const FileLoader = require("./FileLoader");
 import { StorageHandler, UserInterfaceHandler, TextEntry } from "./DataModel";
 import ZvmRunner from "./ZvmRunner";
 const { getActionMap } = require('./intentHandlers')
-
+import PostgresStorageHandler from './PostgresStorage'
 
 process.env.DEBUG = 'actions-on-google:*';
 const { DialogflowApp } = require('actions-on-google');
@@ -65,12 +65,14 @@ class GoogleActionsInterfaceHandler implements UserInterfaceHandler {
 
 const storyUrl = 'http://www.textfire.de/comp/mamph_pamph.z5';
 const storyData = new FileLoader().loadData(storyUrl)
-const storage = new InMemoryStorageHandler();
+
 
 function handlePost(request: express.Request, response: express.Response){
 
   const dfApp = new DialogflowApp({request: request, response: response});
   const handler = new GoogleActionsInterfaceHandler(dfApp);
+  //TODO: pool psql connection
+  const storage = new PostgresStorageHandler(dfApp.getUser().userId, 'mamphpamph', process.env.DATABASE_URL);
 
   storyData
   .then(data => {
@@ -78,13 +80,15 @@ function handlePost(request: express.Request, response: express.Response){
   })
   .then((runner: ZvmRunner) => {
       console.log("runner initialized")
-      if (storage.hasStoredData()){
+      storage.getStoredData().then(savegame => {
         console.log("loading saved data")
         handler.mute(true);
         runner.run();
-        runner.restoreGame(storage.getStoredData());
+        runner.restoreGame(savegame);
         handler.mute(false);
-      }
+      }, err => {
+        console.log("not loading savegame: " + err);
+      })
       return runner;
   })
   .then((runner: ZvmRunner) => {

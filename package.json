@@ -26,11 +26,13 @@
     ]
   },
   "dependencies": {
+    "@types/pg": "7.4.1",
     "actions-on-google": "^1.5.0",
     "body-parser": "^1.15.2",
     "express": "^4.13.4",
     "iconv-lite": "^0.4.15",
     "inquirer": "^3.0.1",
+    "pg": "7.4.0",
     "request": "^2.79.0"
   },
   "devDependencies": {

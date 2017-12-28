@@ -48,7 +48,7 @@ var CommandInterpreter = /** @class */ (function () {
         if (this.lastAnswer && text.startsWith(this.lastAnswer)) {
             text = text.substring(this.lastAnswer.length + 1); // + \r
         }
-        text = order.text.replace(/\r/g, "\n");
+        text = text.replace(/\r/g, "\n");
         if (text.endsWith('>'))
             text = text.substring(0, text.length - 1);
         var style = order.props && order.props["class"] && order.props["class"].replace("zvm-", "");
