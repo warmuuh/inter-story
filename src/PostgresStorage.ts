@@ -5,16 +5,17 @@ import * as pg from "pg";
 import { StorageHandler } from "./DataModel";
 
 
-var pgPool: pg.Pool = new pg.Pool()
+var pgPool: pg.Pool = null;
 
 export default class PostgresStorageHandler implements StorageHandler {
 
     constructor(private userId: string, private gameId: string, dbUrl: string) {
-      pgPool = new pg.Pool({
-          connectionString: dbUrl,
-          ssl: dbUrl.indexOf('localhost') < 0 //no ssl if localhost
-      })
-    
+      if (!pgPool){
+            pgPool = new pg.Pool({
+            connectionString: dbUrl,
+            ssl: dbUrl.indexOf('localhost') < 0 //no ssl if localhost
+        })
+      }
     }
 
 
