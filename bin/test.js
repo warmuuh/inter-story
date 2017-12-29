@@ -33,9 +33,11 @@ process.on('unhandledRejection', function (error) {
     // Will print "unhandledRejection err is not defined"
     console.error('unhandledRejection', error);
 });
+var runner = new ZvmRunner_1["default"](new ConsoleInterfaceHandler(), storage);
 loader.loadData(story)
     .then(function (data) {
-    return ZvmRunner_1["default"].load(data, new ConsoleInterfaceHandler(), storage);
+    runner.load(data);
+    return runner;
 })
     .then(function (runner) {
     console.log("runner initialized");

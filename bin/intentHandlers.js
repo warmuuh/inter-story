@@ -1,10 +1,18 @@
 var START_GAME_INTENT = 'input.startGame';
 var OVERVIEW_INTENT = 'input.overview';
+var LOAD_GAME_INTENT = 'input.loadGame';
 var UNKNOWN_INTENT = 'input.unknown';
 var GAME_ARGUMENT = 'game';
 module.exports = {
     getActionMap: function (runner) {
         var startGame = function (app) {
+            var game = app.getArgument(GAME_ARGUMENT);
+            console.log('game argument: ' + game);
+            // runner.started = app.data.hasOwnProperty('restore');
+            console.log("restarting game");
+            runner.restart();
+        };
+        var loadGame = function (app) {
             var game = app.getArgument(GAME_ARGUMENT);
             console.log('game argument: ' + game);
             // runner.started = app.data.hasOwnProperty('restore');
@@ -26,6 +34,7 @@ module.exports = {
         var actionMap = new Map();
         actionMap.set(START_GAME_INTENT, startGame);
         actionMap.set(OVERVIEW_INTENT, overview);
+        actionMap.set(LOAD_GAME_INTENT, loadGame);
         actionMap.set(UNKNOWN_INTENT, unknownIntent);
         return actionMap;
     }

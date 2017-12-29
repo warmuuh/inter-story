@@ -38,11 +38,12 @@ process.on('unhandledRejection', error => {
   console.error('unhandledRejection', error);
 });
 
-
+const runner = new ZvmRunner(new ConsoleInterfaceHandler(), storage)
 
 loader.loadData(story)
 .then(data => {
-  return ZvmRunner.load(data, new ConsoleInterfaceHandler(), storage)
+  runner.load(data)
+  return runner
 })
 .then(runner => {
     console.log("runner initialized")

@@ -58,9 +58,11 @@ function handlePost(request, response) {
     var handler = new GoogleActionsInterfaceHandler(dfApp);
     //TODO: pool psql connection
     var storage = new PostgresStorage_1["default"](dfApp.getUser().userId, 'mamphpamph', process.env.DATABASE_URL);
+    var runner = new ZvmRunner_1["default"](handler, storage);
     storyData
         .then(function (data) {
-        return ZvmRunner_1["default"].load(data, handler, storage);
+        runner.load(data);
+        return runner;
     })
         .then(function (runner) {
         console.log("runner initialized");
@@ -80,6 +82,7 @@ function handlePost(request, response) {
         var actionMap = getActionMap(runner);
         dfApp.handleRequestAsync(actionMap)
             .then(function () {
+            console.log("save game");
             runner.saveGame();
         });
         return runner;

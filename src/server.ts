@@ -75,9 +75,12 @@ function handlePost(request: express.Request, response: express.Response){
   //TODO: pool psql connection
   const storage = new PostgresStorageHandler(dfApp.getUser().userId, 'mamphpamph', process.env.DATABASE_URL);
 
+  const runner = new ZvmRunner(handler, storage);
+
   storyData
   .then(data => {
-    return ZvmRunner.load(data, handler, storage)
+    runner.load(data)
+    return runner;
   })
   .then((runner: ZvmRunner) => {
       console.log("runner initialized")
@@ -97,6 +100,7 @@ function handlePost(request: express.Request, response: express.Response){
     const actionMap = getActionMap(runner)
     dfApp.handleRequestAsync(actionMap)
     .then(() => {
+      console.log("save game")
       runner.saveGame();
     });
     return runner;

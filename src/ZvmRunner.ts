@@ -10,6 +10,7 @@ export default class ZvmRunner {
     engine: any;
     orders: OrderFactory;
     interpreter: CommandInterpreter;
+    loadedData: any;
   
     constructor(handler: UserInterfaceHandler, storage: StorageHandler){
       this.engine = new ZVM()
@@ -17,21 +18,16 @@ export default class ZvmRunner {
       this.orders = this.interpreter.getOrderFactory()
     }
   
-    static load(data, handler: UserInterfaceHandler, storage: StorageHandler): Promise<ZvmRunner> {
-        const self = this;
-        const runner = new ZvmRunner(handler, storage)
-        runner.sendInput(runner.orders.loadStory(data))
-  
-        return new Promise<ZvmRunner>((resolve, reject) => {
-          try {
-            runner.engine.restart();
-          } catch (e) {
-            return reject('Error: File format not supported.');
-          }
-          console.log('Story Loaded');
-          runner.engine.run();
-          resolve(runner);
-        });
+    load(data): void {
+        this.sendInput(this.orders.loadStory(data))
+        try {
+          this.engine.restart();
+        } catch (e) {
+          throw 'Error: File format not supported.';
+        }
+        console.log('Story Loaded');
+        this.loadedData = data;
+        this.engine.run();
     }
   
   
@@ -56,6 +52,11 @@ export default class ZvmRunner {
       this.run();
     }
   
+    restart() {
+      this.load(this.loadedData)
+      this.run();
+    }
+
     restoreGame(status){
       this.sendInput(this.orders.restoreGame(status));
       this.run();

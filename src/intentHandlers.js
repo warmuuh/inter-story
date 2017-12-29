@@ -1,5 +1,6 @@
 const START_GAME_INTENT = 'input.startGame';
 const OVERVIEW_INTENT = 'input.overview';
+const LOAD_GAME_INTENT = 'input.loadGame';
 const UNKNOWN_INTENT = 'input.unknown';
 const GAME_ARGUMENT = 'game';
 
@@ -7,6 +8,14 @@ module.exports = {
   getActionMap: function(runner) {
 
     const startGame = (app) => {
+      const game = app.getArgument(GAME_ARGUMENT);
+      console.log('game argument: ' + game)
+      // runner.started = app.data.hasOwnProperty('restore');
+      console.log("restarting game")
+      runner.restart();
+    };
+
+    const loadGame = (app) => {
       const game = app.getArgument(GAME_ARGUMENT);
       console.log('game argument: ' + game)
       // runner.started = app.data.hasOwnProperty('restore');
@@ -32,6 +41,7 @@ module.exports = {
     const actionMap = new Map();
     actionMap.set(START_GAME_INTENT, startGame);
     actionMap.set(OVERVIEW_INTENT, overview);
+    actionMap.set(LOAD_GAME_INTENT, loadGame);
     actionMap.set(UNKNOWN_INTENT, unknownIntent);
 
     return actionMap;
