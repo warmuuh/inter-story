@@ -50,6 +50,7 @@ var GoogleActionsInterfaceHandler = /** @class */ (function () {
     };
     return GoogleActionsInterfaceHandler;
 }());
+var databaseUrl = process.env.DATABASE_URL || 'postgres://localhost/postgres';
 var storyUrl = 'http://www.textfire.de/comp/mamph_pamph.z5';
 var storyData = new FileLoader().loadData(storyUrl);
 function handlePost(request, response) {

@@ -5,14 +5,17 @@ import * as pg from "pg";
 import { StorageHandler } from "./DataModel";
 
 
+var pgPool: pg.Pool = new pg.Pool()
+
 export default class PostgresStorageHandler implements StorageHandler {
-    client: pg.Client;
 
     constructor(private userId: string, private gameId: string, dbUrl: string) {
-        this.client = new pg.Client({
+      if (!pgPool){
+        pgPool = new pg.Pool({
             connectionString: dbUrl,
-            ssl: true
-        } );
+            ssl: dbUrl.indexOf('localhost') < 0 //no ssl if localhost
+        })
+      }
     }
 
 
@@ -20,32 +23,26 @@ export default class PostgresStorageHandler implements StorageHandler {
        var self = this;
        return this.getSavegameId().then(id => {
             if (id > 0)
-                return self.client.query('UPDATE interstory.savegames SET SAVEGAME = $1 where ID = $2',
-                                        [gameState, id]);
+                return self.query('UPDATE interstory.savegames SET SAVEGAME = $1 where ID = $2',
+                                        [Buffer.from(gameState), id]);
 
-            return self.client.query('INSERT INTO interstory.savegames(USERID,GAMEID,SAVEGAME) VALUES($1, $2, $3)',
-                                     [self.userId, self.gameId, gameState]);
+            return self.query('INSERT INTO interstory.savegames(USERID,GAMEID,SAVEGAME) VALUES($1, $2, $3)',
+                                     [self.userId, self.gameId, Buffer.from(gameState)]);
         }).then(res => {
-            return self.client.end();
+            return;
         });
-
     }
 
 
     getStoredData(): Promise<Buffer> {
-        var self = this;
-
-        return this.client.connect().then(() => {
-            return self.client.query('SELECT SAVEGAME from interstory.savegames WHERE USERID = $1;', [self.userId])
-        }).then(res => {
-            return new Promise<Buffer>((resolve, reject) => {
-                self.client.end().then(() => {
-                    if ( res.rows.length > 0){
-                        return resolve(res.rows[0])
-                    }
-                    return reject("No savegame found for " + self.userId);
-                });
-            })
+        return this.query('SELECT SAVEGAME from interstory.savegames WHERE USERID = $1;', [this.userId])
+        .then(res => {
+            if ( res.rows.length > 0){
+                const savegame : Uint8Array = res.rows[0].savegame
+                const converted = [].slice.call(savegame); //convert Uint8Array to Array(int)
+                return converted
+            }
+            throw "No savegame found for " + this.userId;
         });
     }
 
@@ -53,18 +50,33 @@ export default class PostgresStorageHandler implements StorageHandler {
     private getSavegameId(): Promise<Number> {
         var self = this;
 
-        return this.client.connect().then(() => {
-            return self.client.query('SELECT ID from interstory.savegames WHERE USERID = $1;', [self.userId])
-        }).then(res => {
-            return new Promise<Number>((resolve, reject) => {
-                self.client.end().then(() => {
-                    if ( res.rows.length > 0){
-                        return resolve(res.rows[0])
-                    }
-                    return resolve(-1);
-                });
-            })
+        return self.query('SELECT ID from interstory.savegames WHERE USERID = $1;', [self.userId])
+        .then(res => {
+          if ( res.rows.length > 0){
+              return res.rows[0].id as Number
+          }
+          return -1;
         });
     }
+
+
+
+    private query(qry: string, variables: any[]): Promise<pg.QueryResult> {
+      return new Promise<pg.QueryResult>((resolve, reject) => {
+        pgPool.connect()
+        .then(client => {
+          return client.query(qry, variables)
+            .then(res => {
+              client.release()
+              return resolve(res)
+            })
+            .catch(e => {
+              client.release()
+              return reject(e)
+            })
+        })
+      });
+    }
+
 
 }

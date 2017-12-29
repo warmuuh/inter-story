@@ -63,6 +63,7 @@ class GoogleActionsInterfaceHandler implements UserInterfaceHandler {
 }
 
 
+const databaseUrl = process.env.DATABASE_URL || 'postgres://localhost/postgres';
 const storyUrl = 'http://www.textfire.de/comp/mamph_pamph.z5';
 const storyData = new FileLoader().loadData(storyUrl)
 
