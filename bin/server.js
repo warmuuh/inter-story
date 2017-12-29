@@ -64,16 +64,17 @@ function handlePost(request, response) {
     })
         .then(function (runner) {
         console.log("runner initialized");
-        storage.getStoredData().then(function (savegame) {
+        return storage.getStoredData().then(function (savegame) {
             console.log("loading saved data");
             handler.mute(true);
             runner.run();
             runner.restoreGame(savegame);
             handler.mute(false);
+            return runner;
         }, function (err) {
             console.log("not loading savegame: " + err);
+            return runner;
         });
-        return runner;
     })
         .then(function (runner) {
         var actionMap = getActionMap(runner);

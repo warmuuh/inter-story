@@ -81,16 +81,17 @@ function handlePost(request: express.Request, response: express.Response){
   })
   .then((runner: ZvmRunner) => {
       console.log("runner initialized")
-      storage.getStoredData().then(savegame => {
+      return storage.getStoredData().then(savegame => {
         console.log("loading saved data")
         handler.mute(true);
         runner.run();
         runner.restoreGame(savegame);
         handler.mute(false);
+        return runner;
       }, err => {
         console.log("not loading savegame: " + err);
+        return runner;
       })
-      return runner;
   })
   .then((runner: ZvmRunner) => {
     const actionMap = getActionMap(runner)
