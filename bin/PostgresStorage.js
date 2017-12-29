@@ -7,12 +7,10 @@ var PostgresStorageHandler = /** @class */ (function () {
     function PostgresStorageHandler(userId, gameId, dbUrl) {
         this.userId = userId;
         this.gameId = gameId;
-        if (!pgPool) {
-            pgPool = new pg.Pool({
-                connectionString: dbUrl,
-                ssl: dbUrl.indexOf('localhost') < 0 //no ssl if localhost
-            });
-        }
+        pgPool = new pg.Pool({
+            connectionString: dbUrl,
+            ssl: dbUrl.indexOf('localhost') < 0 //no ssl if localhost
+        });
     }
     PostgresStorageHandler.prototype.store = function (gameState) {
         var self = this;

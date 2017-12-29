@@ -10,12 +10,11 @@ var pgPool: pg.Pool = new pg.Pool()
 export default class PostgresStorageHandler implements StorageHandler {
 
     constructor(private userId: string, private gameId: string, dbUrl: string) {
-      if (!pgPool){
-        pgPool = new pg.Pool({
-            connectionString: dbUrl,
-            ssl: dbUrl.indexOf('localhost') < 0 //no ssl if localhost
-        })
-      }
+      pgPool = new pg.Pool({
+          connectionString: dbUrl,
+          ssl: dbUrl.indexOf('localhost') < 0 //no ssl if localhost
+      })
+    
     }
 
 
