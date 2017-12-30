@@ -4,7 +4,6 @@ import * as pg from "pg";
 
 import { StorageHandler } from "./DataModel";
 
-
 var pgPool: pg.Pool = null;
 
 export default class PostgresStorageHandler implements StorageHandler {

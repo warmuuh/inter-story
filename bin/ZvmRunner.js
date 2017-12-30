@@ -16,7 +16,6 @@ var ZvmRunner = /** @class */ (function () {
         catch (e) {
             throw 'Error: File format not supported.';
         }
-        console.log('Story Loaded');
         this.loadedData = data;
         this.engine.run();
     };

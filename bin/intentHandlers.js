@@ -3,18 +3,19 @@ var OVERVIEW_INTENT = 'input.overview';
 var LOAD_GAME_INTENT = 'input.loadGame';
 var UNKNOWN_INTENT = 'input.unknown';
 var GAME_ARGUMENT = 'game';
+var log = require('debug')('interstory:ghIntentHandler');
 module.exports = {
     getActionMap: function (runner) {
         var startGame = function (app) {
             var game = app.getArgument(GAME_ARGUMENT);
-            console.log('game argument: ' + game);
+            log('game argument: ' + game);
             // runner.started = app.data.hasOwnProperty('restore');
-            console.log("restarting game");
+            log("restarting game");
             runner.restart();
         };
         var loadGame = function (app) {
             var game = app.getArgument(GAME_ARGUMENT);
-            console.log('game argument: ' + game);
+            log('game argument: ' + game);
             // runner.started = app.data.hasOwnProperty('restore');
             runner.run();
         };

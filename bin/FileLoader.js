@@ -2,6 +2,7 @@
 var fs = require('fs');
 var request = require('request');
 var iconv = require('iconv-lite');
+var log = require('debug')('interstory:loader');
 // Utility from ZVM bootstrap to convert text into an array
 function textToArray(text, array) {
     var i = 0;
@@ -24,11 +25,11 @@ var FileLoader = /** @class */ (function () {
     }
     FileLoader.prototype.loadData = function (story, reload) {
         var _this = this;
-        console.log('loadData: ' + story);
+        log('loadData: ' + story);
         return new Promise(function (resolve, reject) {
             var self = _this;
             if (!reload && _this.cachedFiles[story]) {
-                console.log('loadData: cached');
+                log('loadData: cached');
                 resolve(_this.cachedFiles[story]);
                 return;
             }

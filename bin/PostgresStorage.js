@@ -2,15 +2,17 @@
 // const { Client } = require('pg');
 exports.__esModule = true;
 var pg = require("pg");
-var pgPool = new pg.Pool();
+var pgPool = null;
 var PostgresStorageHandler = /** @class */ (function () {
     function PostgresStorageHandler(userId, gameId, dbUrl) {
         this.userId = userId;
         this.gameId = gameId;
-        pgPool = new pg.Pool({
-            connectionString: dbUrl,
-            ssl: dbUrl.indexOf('localhost') < 0 //no ssl if localhost
-        });
+        if (!pgPool) {
+            pgPool = new pg.Pool({
+                connectionString: dbUrl,
+                ssl: dbUrl.indexOf('localhost') < 0 //no ssl if localhost
+            });
+        }
     }
     PostgresStorageHandler.prototype.store = function (gameState) {
         var self = this;

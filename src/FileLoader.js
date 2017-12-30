@@ -4,6 +4,8 @@ const fs = require('fs');
 const request = require('request');
 const iconv = require('iconv-lite');
 
+var log = require('debug')('interstory:loader')
+
 // Utility from ZVM bootstrap to convert text into an array
  function textToArray(text, array) {
     let i = 0;
@@ -30,11 +32,11 @@ class FileLoader {
   }
 
   loadData(story, reload) {
-    console.log('loadData: ' + story);
+    log('loadData: ' + story);
     return new Promise((resolve, reject) => {
       const self = this;
       if (!reload && this.cachedFiles[story]) {
-        console.log('loadData: cached');
+        log('loadData: cached');
         resolve(this.cachedFiles[story]);
         return;
       }

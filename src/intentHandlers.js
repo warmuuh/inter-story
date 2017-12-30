@@ -4,20 +4,22 @@ const LOAD_GAME_INTENT = 'input.loadGame';
 const UNKNOWN_INTENT = 'input.unknown';
 const GAME_ARGUMENT = 'game';
 
+var log = require('debug')('interstory:ghIntentHandler')
+
 module.exports = {
   getActionMap: function(runner) {
 
     const startGame = (app) => {
       const game = app.getArgument(GAME_ARGUMENT);
-      console.log('game argument: ' + game)
+      log('game argument: ' + game)
       // runner.started = app.data.hasOwnProperty('restore');
-      console.log("restarting game")
+      log("restarting game")
       runner.restart();
     };
 
     const loadGame = (app) => {
       const game = app.getArgument(GAME_ARGUMENT);
-      console.log('game argument: ' + game)
+      log('game argument: ' + game)
       // runner.started = app.data.hasOwnProperty('restore');
       runner.run();
     };
