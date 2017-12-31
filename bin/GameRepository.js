@@ -10,7 +10,7 @@ var GameRepository = /** @class */ (function () {
         var storyUrl = 'http://www.textfire.de/comp/mamph_pamph.z5';
         var storyData = new FileLoader().loadData(storyUrl);
         return storyData.then(function (data) {
-            _this.loadedGames['mamph_pamph'] = data;
+            _this.loadedGames['mamphpamph'] = data;
         });
     };
     GameRepository.prototype.getGame = function (gameid) {

@@ -7,7 +7,13 @@ export interface UserInterfaceHandler {
     tell(texts: TextEntry[])
 }
 
+
+export class Savegame {
+    constructor(public gameid:string, public data: Array<Number>){}
+}
+
 export interface StorageHandler {
     store(gameState)
+    
 }
   

@@ -27,19 +27,33 @@ function handlePost(request, response) {
     var dfApp = new DialogflowApp({ request: request, response: response });
     var handler = new GoogleActionsInterfaceHandler_1["default"](dfApp);
     console.log("handling request for user ", dfApp.getUser());
-    var storage = new PostgresStorage_1["default"](dfApp.getUser().userId, 'mamphpamph', process.env.DATABASE_URL);
+    var userId = dfApp.getUser().userId;
+    var gameId = null;
+    var storage = new PostgresStorage_1["default"](userId, process.env.DATABASE_URL);
     var runner = new ZvmRunner_1["default"](handler, storage);
-    var gameData = repository.getGame('mamph_pamph');
-    runner.load(gameData);
     storage.getStoredData().then(function (savegame) {
+        gameId = savegame.gameid;
+        var gameData = repository.getGame(gameId);
+        console.log("loading game " + gameId);
+        runner.load(gameData);
+        storage.gameId = gameId;
         console.log("loading saved data");
         handler.mute(true);
         runner.run();
-        runner.restoreGame(savegame);
+        runner.restoreGame(savegame.data);
         handler.mute(false);
         return runner;
     }, function (err) {
         console.log("not loading savegame: " + err);
+        gameId = app.getArgument("game");
+        if (!gameId) {
+            gameId = 'mamphpamph';
+            console.log("falling back to default game: " + gameId);
+        }
+        var gameData = repository.getGame(gameId);
+        console.log('loading game: ' + gameId);
+        runner.load(gameData);
+        storage.gameId = gameId;
         return runner;
     })
         .then(function (runner) {

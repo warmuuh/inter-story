@@ -42,22 +42,35 @@ function handlePost(request: express.Request, response: express.Response){
   const handler = new GoogleActionsInterfaceHandler(dfApp);
 
   console.log("handling request for user ", dfApp.getUser());
-
-  const storage = new PostgresStorageHandler(dfApp.getUser().userId, 'mamphpamph', process.env.DATABASE_URL);
-
+  const userId = dfApp.getUser().userId;
+  var gameId = null;
+  const storage = new PostgresStorageHandler(userId, process.env.DATABASE_URL);
   const runner = new ZvmRunner(handler, storage);
-  const gameData = repository.getGame('mamph_pamph')
-  runner.load(gameData);
+ 
 
   storage.getStoredData().then(savegame => {
+    gameId = savegame.gameid
+    const gameData = repository.getGame(gameId)
+    console.log("loading game " + gameId)
+    runner.load(gameData);
+    storage.gameId = gameId;
     console.log("loading saved data")
     handler.mute(true);
     runner.run();
-    runner.restoreGame(savegame);
+    runner.restoreGame(savegame.data);
     handler.mute(false);
     return runner;
   }, err => {
     console.log("not loading savegame: " + err);
+    gameId = app.getArgument("game");
+    if (!gameId){
+      gameId = 'mamphpamph';
+      console.log("falling back to default game: " + gameId)
+    }
+    const gameData = repository.getGame(gameId)
+    console.log('loading game: ' + gameId)
+    runner.load(gameData);
+    storage.gameId = gameId;
     return runner;
   })
   .then((runner: ZvmRunner) => {

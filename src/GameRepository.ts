@@ -14,7 +14,7 @@ export default class GameRepository {
     const storyUrl = 'http://www.textfire.de/comp/mamph_pamph.z5';
     const storyData = new FileLoader().loadData(storyUrl)
     return storyData.then(data => {
-      this.loadedGames['mamph_pamph'] = data;
+      this.loadedGames['mamphpamph'] = data;
     });
   }
 

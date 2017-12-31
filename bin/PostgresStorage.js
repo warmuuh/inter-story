@@ -2,11 +2,11 @@
 // const { Client } = require('pg');
 exports.__esModule = true;
 var pg = require("pg");
+var DataModel_1 = require("./DataModel");
 var pgPool = null;
 var PostgresStorageHandler = /** @class */ (function () {
-    function PostgresStorageHandler(userId, gameId, dbUrl) {
+    function PostgresStorageHandler(userId, dbUrl) {
         this.userId = userId;
-        this.gameId = gameId;
         if (!pgPool) {
             pgPool = new pg.Pool({
                 connectionString: dbUrl,
@@ -26,12 +26,13 @@ var PostgresStorageHandler = /** @class */ (function () {
     };
     PostgresStorageHandler.prototype.getStoredData = function () {
         var _this = this;
-        return this.query('SELECT SAVEGAME from interstory.savegames WHERE USERID = $1;', [this.userId])
+        return this.query('SELECT SAVEGAME,GAMEID from interstory.savegames WHERE USERID = $1;', [this.userId])
             .then(function (res) {
             if (res.rows.length > 0) {
                 var savegame = res.rows[0].savegame;
+                var gameId = res.rows[0].gameid;
                 var converted = [].slice.call(savegame); //convert Uint8Array to Array(int)
-                return converted;
+                return new DataModel_1.Savegame(gameId, converted);
             }
             throw "No savegame found for " + _this.userId;
         });

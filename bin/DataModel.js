@@ -8,4 +8,12 @@ var TextEntry = /** @class */ (function () {
     return TextEntry;
 }());
 exports.TextEntry = TextEntry;
+var Savegame = /** @class */ (function () {
+    function Savegame(gameid, data) {
+        this.gameid = gameid;
+        this.data = data;
+    }
+    return Savegame;
+}());
+exports.Savegame = Savegame;
 //# sourceMappingURL=DataModel.js.map

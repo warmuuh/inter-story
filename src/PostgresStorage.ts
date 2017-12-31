@@ -2,13 +2,15 @@
 
 import * as pg from "pg";
 
-import { StorageHandler } from "./DataModel";
+import { StorageHandler, Savegame } from "./DataModel";
 
 var pgPool: pg.Pool = null;
 
 export default class PostgresStorageHandler implements StorageHandler {
 
-    constructor(private userId: string, private gameId: string, dbUrl: string) {
+    gameId: string
+    
+    constructor(private userId: string, dbUrl: string) {
       if (!pgPool){
             pgPool = new pg.Pool({
             connectionString: dbUrl,
@@ -33,13 +35,14 @@ export default class PostgresStorageHandler implements StorageHandler {
     }
 
 
-    getStoredData(): Promise<Buffer> {
-        return this.query('SELECT SAVEGAME from interstory.savegames WHERE USERID = $1;', [this.userId])
+    getStoredData(): Promise<Savegame> {
+        return this.query('SELECT SAVEGAME,GAMEID from interstory.savegames WHERE USERID = $1;', [this.userId])
         .then(res => {
             if ( res.rows.length > 0){
                 const savegame : Uint8Array = res.rows[0].savegame
+                const gameId: string = res.rows[0].gameid;
                 const converted = [].slice.call(savegame); //convert Uint8Array to Array(int)
-                return converted
+                return new Savegame(gameId, converted);
             }
             throw "No savegame found for " + this.userId;
         });
