@@ -24,7 +24,8 @@ app.use(bodyParser.json());
 app.set('port', (process.env.PORT || 8080));
 
 
-app.post('/', handlePost)
+app.post('/google_home', handlePost)
+app.get('/', handleIndex)
 
 repository.init().then(() => {
   const server = app.listen(process.env.PORT || 8080, () => {
@@ -34,6 +35,9 @@ repository.init().then(() => {
   });
 })
 
+function handleIndex(request: express.Request, response: express.Response){
+  response.json({status: 'OK'});
+}
  
 
 function handlePost(request: express.Request, response: express.Response){
