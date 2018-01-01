@@ -15,7 +15,8 @@ var repository = new GameRepository_1["default"]();
 var app = express();
 app.use(bodyParser.json());
 app.set('port', (process.env.PORT || 8080));
-app.post('/', handlePost);
+app.post('/google_home', handlePost);
+app.get('/', handleIndex);
 repository.init().then(function () {
     var server = app.listen(process.env.PORT || 8080, function () {
         var port = server.address().port;
@@ -23,6 +24,9 @@ repository.init().then(function () {
         console.log('Debugging ' + process.env.DEBUG);
     });
 });
+function handleIndex(request, response) {
+    response.json({ status: 'OK' });
+}
 function handlePost(request, response) {
     var dfApp = new DialogflowApp({ request: request, response: response });
     var handler = new GoogleActionsInterfaceHandler_1["default"](dfApp);
@@ -45,7 +49,7 @@ function handlePost(request, response) {
         return runner;
     }, function (err) {
         console.log("not loading savegame: " + err);
-        gameId = app.getArgument("game");
+        gameId = dfApp.getArgument("game");
         if (!gameId) {
             gameId = 'mamphpamph';
             console.log("falling back to default game: " + gameId);

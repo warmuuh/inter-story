@@ -66,7 +66,7 @@ function handlePost(request: express.Request, response: express.Response){
     return runner;
   }, err => {
     console.log("not loading savegame: " + err);
-    gameId = app.getArgument("game");
+    gameId = dfApp.getArgument("game");
     if (!gameId){
       gameId = 'mamphpamph';
       console.log("falling back to default game: " + gameId)
