@@ -24,8 +24,8 @@ export default class PostgresStorageHandler implements StorageHandler {
        var self = this;
        return this.getSavegameId().then(id => {
             if (id > 0)
-                return self.query('UPDATE interstory.savegames SET SAVEGAME = $1 where ID = $2',
-                                        [Buffer.from(gameState), id]);
+                return self.query('UPDATE interstory.savegames SET SAVEGAME = $1,GAMEID = $2 where ID = $3',
+                                        [Buffer.from(gameState), self.gameId, id]);
 
             return self.query('INSERT INTO interstory.savegames(USERID,GAMEID,SAVEGAME) VALUES($1, $2, $3)',
                                      [self.userId, self.gameId, Buffer.from(gameState)]);
