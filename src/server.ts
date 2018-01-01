@@ -53,11 +53,18 @@ function handlePost(request: express.Request, response: express.Response){
  
 
   storage.getStoredData().then(savegame => {
-    gameId = savegame.gameid
+    var gameIdArg = dfApp.getArgument("game");
+    gameId = gameIdArg || savegame.gameid
     const gameData = repository.getGame(gameId)
     console.log("loading game " + gameId)
     runner.load(gameData);
     storage.gameId = gameId;
+
+    if (gameId !== savegame.gameid) //user started a new game. hack, this should be decided in intent handler
+    {
+      return runner;
+    }
+    
     console.log("loading saved data")
     handler.mute(true);
     runner.run();

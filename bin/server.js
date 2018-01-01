@@ -36,11 +36,15 @@ function handlePost(request, response) {
     var storage = new PostgresStorage_1["default"](userId, process.env.DATABASE_URL);
     var runner = new ZvmRunner_1["default"](handler, storage);
     storage.getStoredData().then(function (savegame) {
-        gameId = savegame.gameid;
+        var gameIdArg = dfApp.getArgument("game");
+        gameId = gameIdArg || savegame.gameid;
         var gameData = repository.getGame(gameId);
         console.log("loading game " + gameId);
         runner.load(gameData);
         storage.gameId = gameId;
+        if (gameId !== savegame.gameid) {
+            return runner;
+        }
         console.log("loading saved data");
         handler.mute(true);
         runner.run();
