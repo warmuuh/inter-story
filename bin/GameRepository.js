@@ -1,16 +1,30 @@
 "use strict";
 exports.__esModule = true;
 var FileLoader = require("./FileLoader");
+var games = [
+    {
+        id: 'mamphpamph',
+        file: './data/mamph_pamph.z5'
+    },
+    {
+        id: 'emilia',
+        file: './data/emilia.z5'
+    }
+];
 var GameRepository = /** @class */ (function () {
     function GameRepository() {
         this.loadedGames = {};
     }
     GameRepository.prototype.init = function () {
         var _this = this;
-        var storyUrl = 'http://www.textfire.de/comp/mamph_pamph.z5';
-        var storyData = new FileLoader().loadData(storyUrl);
-        return storyData.then(function (data) {
-            _this.loadedGames['mamphpamph'] = data;
+        var promises = games.map(function (game) {
+            var storyData = new FileLoader().loadData(game.file);
+            return storyData.then(function (data) {
+                _this.loadedGames[game.id] = data;
+            });
+        });
+        return Promise.all(promises).then(function () {
+            return;
         });
     };
     GameRepository.prototype.getGame = function (gameid) {

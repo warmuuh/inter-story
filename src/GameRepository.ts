@@ -1,6 +1,17 @@
 
 const FileLoader = require("./FileLoader");
 
+const games = [
+  {
+    id: 'mamphpamph',
+    file: './data/mamph_pamph.z5'
+  },
+  {
+    id: 'emilia',
+    file: './data/emilia.z5'
+  }
+]
+
 
 export default class GameRepository {
 
@@ -11,11 +22,16 @@ export default class GameRepository {
   }
 
   init(): Promise<void> {
-    const storyUrl = 'http://www.textfire.de/comp/mamph_pamph.z5';
-    const storyData = new FileLoader().loadData(storyUrl)
-    return storyData.then(data => {
-      this.loadedGames['mamphpamph'] = data;
+    const promises = games.map(game => {
+      const storyData = new FileLoader().loadData(game.file)
+      return storyData.then(data => {
+        this.loadedGames[game.id] = data;
+      });
     });
+
+    return Promise.all(promises).then(() => {
+      return;
+    })
   }
 
   getGame(gameid: string): any {

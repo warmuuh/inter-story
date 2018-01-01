@@ -46,7 +46,7 @@ var FileLoader = /** @class */ (function () {
             }
             else {
                 // or load story file from local file system
-                fs.readFile(_this.story, function (error, file) {
+                fs.readFile(story, function (error, file) {
                     if (error) {
                         reject('Error loading file: ' + story);
                         return;
