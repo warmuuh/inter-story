@@ -35,6 +35,7 @@ function handlePost(request, response) {
     var gameId = null;
     var storage = new PostgresStorage_1["default"](userId, process.env.DATABASE_URL);
     var runner = new ZvmRunner_1["default"](handler, storage);
+    handler.setResponded(false);
     storage.getStoredData().then(function (savegame) {
         var gameIdArg = dfApp.getArgument("game");
         gameId = gameIdArg || savegame.gameid;
@@ -75,6 +76,11 @@ function handlePost(request, response) {
     })["catch"](function (err) {
         console.log("error catched: " + err);
         dfApp.tell("Ich habe leider gerade Probleme. Versuche es doch später noch einmal.");
+    }).then(function () {
+        //always respond with something
+        if (!handler.hasResponded()) {
+            handler.tellSuccess();
+        }
     });
 }
 //# sourceMappingURL=server.js.map

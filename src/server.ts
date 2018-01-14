@@ -50,7 +50,7 @@ function handlePost(request: express.Request, response: express.Response){
   var gameId = null;
   const storage = new PostgresStorageHandler(userId, process.env.DATABASE_URL);
   const runner = new ZvmRunner(handler, storage);
- 
+  handler.setResponded(false);
 
   storage.getStoredData().then(savegame => {
     var gameIdArg = dfApp.getArgument("game");
@@ -95,5 +95,10 @@ function handlePost(request: express.Request, response: express.Response){
   }).catch(err => {
     console.log("error catched: " + err);
     dfApp.tell("Ich habe leider gerade Probleme. Versuche es doch später noch einmal.")
+  }).then(() => {
+    //always respond with something
+    if (!handler.hasResponded()){
+      handler.tellSuccess();
+    }
   });
 }
