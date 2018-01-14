@@ -74,6 +74,7 @@ function handlePost(request, response) {
         });
     })["catch"](function (err) {
         console.log("error catched: " + err);
+        dfApp.tell("Ich habe leider gerade Probleme. Versuche es doch später noch einmal.");
     });
 }
 //# sourceMappingURL=server.js.map

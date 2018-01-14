@@ -94,5 +94,6 @@ function handlePost(request: express.Request, response: express.Response){
     });
   }).catch(err => {
     console.log("error catched: " + err);
+    dfApp.tell("Ich habe leider gerade Probleme. Versuche es doch später noch einmal.")
   });
 }
