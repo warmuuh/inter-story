@@ -8,6 +8,7 @@ var InMemoryStorageHandler = /** @class */ (function () {
     }
     InMemoryStorageHandler.prototype.store = function (gameState) {
         this.storedData = gameState;
+        return Promise.resolve();
     };
     InMemoryStorageHandler.prototype.getStoredData = function () {
         return this.storedData;

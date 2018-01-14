@@ -80,10 +80,12 @@ var CommandInterpreter = /** @class */ (function () {
         this.lastAnswer = null;
     };
     CommandInterpreter.prototype.save = function (order) {
-        //console.log(order)
-        this.storage.store(order.data);
-        order.result = 1;
-        return order;
+        if (order.data) {
+            this.storage.store(order.data)
+                .then(function () { return console.log("saved successful"); })["catch"](function (e) { return console.log("error", e); });
+            order.result = 1;
+            return order;
+        }
     };
     return CommandInterpreter;
 }());

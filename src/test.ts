@@ -8,8 +8,9 @@ const fs = require("fs")
 
 class InMemoryStorageHandler implements StorageHandler{
   storedData: any;
-  store(gameState){
+  store(gameState): Promise<void>{
     this.storedData = gameState
+    return Promise.resolve();
   }
 
   getStoredData(){

@@ -109,10 +109,14 @@ export class CommandInterpreter {
     }
   
     save(order){
-      //console.log(order)
-      this.storage.store(order.data)
-      order.result = 1;
-      return order;
+      if (order.data){
+        this.storage.store(order.data)
+          .then(() => console.log("saved successful"))
+          .catch((e) => console.log("error", e))
+
+        order.result = 1;
+        return order;
+      }
     }
   }
   

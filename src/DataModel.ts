@@ -13,7 +13,7 @@ export class Savegame {
 }
 
 export interface StorageHandler {
-    store(gameState)
+    store(gameState): Promise<void>
     
 }
   
