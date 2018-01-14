@@ -70,6 +70,9 @@ var CommandInterpreter = /** @class */ (function () {
     CommandInterpreter.prototype.char = function (order) {
         console.log(order);
     };
+    CommandInterpreter.prototype.restore = function (order) {
+        console.log(order);
+    };
     CommandInterpreter.prototype.setLastAnswer = function (answer) {
         this.lastAnswer = answer;
     };
