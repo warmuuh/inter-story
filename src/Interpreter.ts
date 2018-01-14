@@ -96,6 +96,9 @@ export class CommandInterpreter {
       console.log(order)
     }
   
+    restore(order){
+      console.log(order)
+    }
   
     setLastAnswer(answer:String){
       this.lastAnswer = answer;
